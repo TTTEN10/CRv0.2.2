@@ -655,7 +655,7 @@
         -256
       ],
       "id": "fc43fee5-cf57-454b-bb90-1add09e934d5",
-      "name": "Schedule Trigger"
+      "name": "Schedule Trigger (Base)"
     },
     {
       "id": "ScheduleTrigger",
