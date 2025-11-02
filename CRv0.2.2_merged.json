@@ -238,7 +238,7 @@
     },
     {
       "parameters": {
-        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Order Book Depth**\n\n**Endpoint:** `GET /api/v3/depth`\n**What it does:** Returns **order book** bids/asks up to `limit`.\n**Params:**\n\n* `symbol` (STRING, required)\n* `limit` (INT, default 100; max 5000; we default 100)\n  **Request weight:** varies by `limit` (1\u2013100 \u2192 5; 101\u2013500 \u2192 25; 501\u20131000 \u2192 50; 1001\u20135000 \u2192 250).\n  **Returns:** `lastUpdateId`, `bids: [[price, qty], ...]`, `asks: [[price, qty], ...]`\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\nlimit  = $fromAI('parameters1_Value', 100, 'number')\n```\n\n**Notes:** If `limit > 5000`, only 5000 are returned.",
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Order Book Depth**\n\n**Endpoint:** `GET /api/v3/depth`\n**What it does:** Returns **order book** bids/asks up to `limit`.\n**Params:**\n\n* `symbol` (STRING, required)\n* `limit` (INT, default 100; max 5000; we default 100)\n  **Request weight:** varies by `limit` (1–100 → 5; 101–500 → 25; 501–1000 → 50; 1001–5000 → 250).\n  **Returns:** `lastUpdateId`, `bids: [[price, qty], ...]`, `asks: [[price, qty], ...]`\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\nlimit  = $fromAI('parameters1_Value', 100, 'number')\n```\n\n**Notes:** If `limit > 5000`, only 5000 are returned.",
         "height": 884,
         "color": 6
       },
@@ -297,7 +297,7 @@
         "promptType": "define",
         "text": "={{ $json.message }}",
         "options": {
-          "systemMessage": "You are the **Binance Spot Market Data Agent**.  \n\nYou have **HTTP request access** to the official Binance REST API to retrieve market data for any requested Binance Spot trading pair.  \nYour job is to **fetch and present data only**. You do **not** analyze, predict, or recommend.\n\n---\n\n## \ud83d\udd17 API Access\n\n**Base endpoints** (primary default = `https://api.binance.com`):  \n- https://api.binance.com  \n- https://api-gcp.binance.com  \n- https://api1.binance.com \u2026 https://api4.binance.com  \n\n**Format rules:**  \n- All requests are **HTTP GET**  \n- Responses are **JSON**  \n- Parameters use query strings (e.g., `?symbol=BTCUSDT&limit=100`)  \n- `symbol` is always uppercase, no `/` or `-` (e.g., `BTCUSDT`)  \n\n---\n\n## \ud83d\udccc Available Market Data Endpoints\n\n1. **Order Book Depth**  \n   `GET /api/v3/depth?symbol=BTCUSDT&limit=100`  \n   \u2022 Returns top bids/asks up to the limit (default 100, max 5000).  \n\n2. **Recent Trades**  \n   `GET /api/v3/trades?symbol=BTCUSDT&limit=100`  \n   \u2022 Most recent trades (default 500, max 1000).  \n\n3. **Aggregate Trades**  \n   `GET /api/v3/aggTrades?symbol=BTCUSDT&limit=100`  \n   \u2022 Aggregated trades by taker, price, and time.  \n\n4. **Kline / Candlestick Data**  \n   `GET /api/v3/klines?symbol=BTCUSDT&interval=15m&limit=20`  \n   \u2022 Supported intervals: `1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M`  \n   \u2022 Default limit = 500 (max 1000).  \n\n5. **Current Average Price**  \n   `GET /api/v3/avgPrice?symbol=BTCUSDT`  \n   \u2022 Returns rolling average price.  \n\n6. **24hr Ticker Price Change Statistics**  \n   `GET /api/v3/ticker/24hr?symbol=BTCUSDT`  \n   \u2022 Includes open, high, low, last, volume, % change, etc.  \n\n7. **Latest Symbol Price**  \n   `GET /api/v3/ticker/price?symbol=BTCUSDT`  \n   \u2022 Returns the latest trade price.  \n\n8. **Order Book Best Bid/Ask**  \n   `GET /api/v3/ticker/bookTicker?symbol=BTCUSDT`  \n   \u2022 Returns best bid and ask with sizes.  \n\n---\n\n## \ud83e\udde9 Utility Tools\n\n- **Calculator** \u2192 Perform math inside the workflow (e.g., spreads, % changes, normalizations).  \n- **Think** \u2192 Lightweight reasoning helper to reshape JSON, select fields, and prepare outputs.  \n\n---\n\n## \ud83d\udce4 Output Format (Telegram HTML)\n\nStart every response with:  \n```html\n<b>{{SYMBOL}} \u2014 Binance Spot Data</b>\n````\n\nThen group logically:\n\n```html\n<b>Price</b>\n\u2022 Last: {{lastPrice}}\n\u2022 Avg: {{avgPrice}}\n\u2022 Change (24h): {{pctChange}}%\n\n<b>24h Stats</b>\n\u2022 Open: {{open}} \u2022 High: {{high}} \u2022 Low: {{low}} \u2022 Close: {{close}}\n\u2022 Volume: {{baseVol}} \u2022 Quote Vol: {{quoteVol}}\n\n<b>Order Book (Top 5)</b>\n\u2022 Bids: [price x qty] \u2026\n\u2022 Asks: [price x qty] \u2026\n\n<b>Klines (latest 20)</b>\n\u2022 Interval: {{interval}} (O/H/L/C per candle)\n```\n\n---\n\n## \u26a0\ufe0f Rules\n\n* Always **call the correct API endpoint** for the requested data.\n* Do **not** fabricate or calculate values yourself.\n* Do **not** provide trading advice, sentiment, or predictions.\n* Do **not** output raw JSON; always present clean, human-readable values.\n* If data is missing or request fails, show `N/A`.\n\n```\n"
+          "systemMessage": "You are the **Binance Spot Market Data Agent**.  \n\nYou have **HTTP request access** to the official Binance REST API to retrieve market data for any requested Binance Spot trading pair.  \nYour job is to **fetch and present data only**. You do **not** analyze, predict, or recommend.\n\n---\n\n## 🔗 API Access\n\n**Base endpoints** (primary default = `https://api.binance.com`):  \n- https://api.binance.com  \n- https://api-gcp.binance.com  \n- https://api1.binance.com … https://api4.binance.com  \n\n**Format rules:**  \n- All requests are **HTTP GET**  \n- Responses are **JSON**  \n- Parameters use query strings (e.g., `?symbol=BTCUSDT&limit=100`)  \n- `symbol` is always uppercase, no `/` or `-` (e.g., `BTCUSDT`)  \n\n---\n\n## 📌 Available Market Data Endpoints\n\n1. **Order Book Depth**  \n   `GET /api/v3/depth?symbol=BTCUSDT&limit=100`  \n   • Returns top bids/asks up to the limit (default 100, max 5000).  \n\n2. **Recent Trades**  \n   `GET /api/v3/trades?symbol=BTCUSDT&limit=100`  \n   • Most recent trades (default 500, max 1000).  \n\n3. **Aggregate Trades**  \n   `GET /api/v3/aggTrades?symbol=BTCUSDT&limit=100`  \n   • Aggregated trades by taker, price, and time.  \n\n4. **Kline / Candlestick Data**  \n   `GET /api/v3/klines?symbol=BTCUSDT&interval=15m&limit=20`  \n   • Supported intervals: `1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M`  \n   • Default limit = 500 (max 1000).  \n\n5. **Current Average Price**  \n   `GET /api/v3/avgPrice?symbol=BTCUSDT`  \n   • Returns rolling average price.  \n\n6. **24hr Ticker Price Change Statistics**  \n   `GET /api/v3/ticker/24hr?symbol=BTCUSDT`  \n   • Includes open, high, low, last, volume, % change, etc.  \n\n7. **Latest Symbol Price**  \n   `GET /api/v3/ticker/price?symbol=BTCUSDT`  \n   • Returns the latest trade price.  \n\n8. **Order Book Best Bid/Ask**  \n   `GET /api/v3/ticker/bookTicker?symbol=BTCUSDT`  \n   • Returns best bid and ask with sizes.  \n\n---\n\n## 🧩 Utility Tools\n\n- **Calculator** → Perform math inside the workflow (e.g., spreads, % changes, normalizations).  \n- **Think** → Lightweight reasoning helper to reshape JSON, select fields, and prepare outputs.  \n\n---\n\n## 📤 Output Format (Telegram HTML)\n\nStart every response with:  \n```html\n<b>{{SYMBOL}} — Binance Spot Data</b>\n````\n\nThen group logically:\n\n```html\n<b>Price</b>\n• Last: {{lastPrice}}\n• Avg: {{avgPrice}}\n• Change (24h): {{pctChange}}%\n\n<b>24h Stats</b>\n• Open: {{open}} • High: {{high}} • Low: {{low}} • Close: {{close}}\n• Volume: {{baseVol}} • Quote Vol: {{quoteVol}}\n\n<b>Order Book (Top 5)</b>\n• Bids: [price x qty] …\n• Asks: [price x qty] …\n\n<b>Klines (latest 20)</b>\n• Interval: {{interval}} (O/H/L/C per candle)\n```\n\n---\n\n## ⚠️ Rules\n\n* Always **call the correct API endpoint** for the requested data.\n* Do **not** fabricate or calculate values yourself.\n* Do **not** provide trading advice, sentiment, or predictions.\n* Do **not** output raw JSON; always present clean, human-readable values.\n* If data is missing or request fails, show `N/A`.\n\n```\n"
         }
       },
       "id": "71022660-e4cb-4adf-9c94-da5a4445d2f9",
@@ -311,7 +311,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "### \ud83c\udff7 Tool: **Price (Latest)**\n\n**Endpoint:** `GET /api/v3/ticker/price`\n**What it does:** Returns the **latest trade price** for a symbol.\n**Params:** `symbol` (STRING, optional for all symbols; **we send it**)\n**Request weight:** `2` with `symbol` (otherwise `4`).\n**Returns:** `{\"symbol\":\"BTCUSDT\",\"price\":\"...\"}`\n**n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\n```\n\n**Notes:** Use UPPERCASE symbols without `-` or `/` (e.g., `BTCUSDT`).",
+        "toolDescription": "### 🏷 Tool: **Price (Latest)**\n\n**Endpoint:** `GET /api/v3/ticker/price`\n**What it does:** Returns the **latest trade price** for a symbol.\n**Params:** `symbol` (STRING, optional for all symbols; **we send it**)\n**Request weight:** `2` with `symbol` (otherwise `4`).\n**Returns:** `{\"symbol\":\"BTCUSDT\",\"price\":\"...\"}`\n**n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\n```\n\n**Notes:** Use UPPERCASE symbols without `-` or `/` (e.g., `BTCUSDT`).",
         "url": "https://api.binance.com/api/v3/ticker/price",
         "sendQuery": true,
         "queryParameters": {
@@ -335,7 +335,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "### \ud83c\udff7 Tool: **24h Stats**\n\n**Endpoint:** `GET /api/v3/ticker/24hr`\n**What it does:** 24-hour rolling window stats: **open/high/low/last**, **volume**, **quoteVolume**, **% change**, etc.\n**Params:**\n\n* `symbol` (STRING, optional but we send it)\n* (Mutually exclusive with `symbols`)\n  **Request weight:** `2` with one `symbol`; heavier without or with many symbols.\n  **Returns (FULL):** priceChange, priceChangePercent, weightedAvgPrice, openPrice, highPrice, lowPrice, lastPrice, volume, quoteVolume, openTime, closeTime, firstId, lastId, count.\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\n```\n\n**Notes:** Rolling window differs from `ticker/tradingDay`.&#x20;",
+        "toolDescription": "### 🏷 Tool: **24h Stats**\n\n**Endpoint:** `GET /api/v3/ticker/24hr`\n**What it does:** 24-hour rolling window stats: **open/high/low/last**, **volume**, **quoteVolume**, **% change**, etc.\n**Params:**\n\n* `symbol` (STRING, optional but we send it)\n* (Mutually exclusive with `symbols`)\n  **Request weight:** `2` with one `symbol`; heavier without or with many symbols.\n  **Returns (FULL):** priceChange, priceChangePercent, weightedAvgPrice, openPrice, highPrice, lowPrice, lastPrice, volume, quoteVolume, openTime, closeTime, firstId, lastId, count.\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\n```\n\n**Notes:** Rolling window differs from `ticker/tradingDay`.&#x20;",
         "url": "https://api.binance.com/api/v3/ticker/24hr",
         "sendQuery": true,
         "queryParameters": {
@@ -359,7 +359,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "### \ud83c\udff7 Tool: **Order Book Depth**\n\n**Endpoint:** `GET /api/v3/depth`\n**What it does:** Returns **order book** bids/asks up to `limit`.\n**Params:**\n\n* `symbol` (STRING, required)\n* `limit` (INT, default 100; max 5000; we default 100)\n  **Request weight:** varies by `limit` (1\u2013100 \u2192 5; 101\u2013500 \u2192 25; 501\u20131000 \u2192 50; 1001\u20135000 \u2192 250).\n  **Returns:** `lastUpdateId`, `bids: [[price, qty], ...]`, `asks: [[price, qty], ...]`\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\nlimit  = $fromAI('parameters1_Value', 100, 'number')\n```\n\n**Notes:** If `limit > 5000`, only 5000 are returned.",
+        "toolDescription": "### 🏷 Tool: **Order Book Depth**\n\n**Endpoint:** `GET /api/v3/depth`\n**What it does:** Returns **order book** bids/asks up to `limit`.\n**Params:**\n\n* `symbol` (STRING, required)\n* `limit` (INT, default 100; max 5000; we default 100)\n  **Request weight:** varies by `limit` (1–100 → 5; 101–500 → 25; 501–1000 → 50; 1001–5000 → 250).\n  **Returns:** `lastUpdateId`, `bids: [[price, qty], ...]`, `asks: [[price, qty], ...]`\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\nlimit  = $fromAI('parameters1_Value', 100, 'number')\n```\n\n**Notes:** If `limit > 5000`, only 5000 are returned.",
         "url": "https://api.binance.com/api/v3/depth",
         "sendQuery": true,
         "queryParameters": {
@@ -387,7 +387,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "### \ud83c\udff7 Tool: **Best Bid/Ask (Book Ticker)**\n\n**Endpoint:** `GET /api/v3/ticker/bookTicker`\n**What it does:** Best **bid/ask** and sizes for the symbol.\n**Params:** `symbol` (optional; **we send it**)\n**Request weight:** `2` with `symbol`, `4` otherwise.\n**Returns:** `{\"symbol\":\"BTCUSDT\",\"bidPrice\":\"...\",\"bidQty\":\"...\",\"askPrice\":\"...\",\"askQty\":\"...\"}`\n**n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\n```\n\n**Notes:** Great for quick spread snapshot.",
+        "toolDescription": "### 🏷 Tool: **Best Bid/Ask (Book Ticker)**\n\n**Endpoint:** `GET /api/v3/ticker/bookTicker`\n**What it does:** Best **bid/ask** and sizes for the symbol.\n**Params:** `symbol` (optional; **we send it**)\n**Request weight:** `2` with `symbol`, `4` otherwise.\n**Returns:** `{\"symbol\":\"BTCUSDT\",\"bidPrice\":\"...\",\"bidQty\":\"...\",\"askPrice\":\"...\",\"askQty\":\"...\"}`\n**n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\n```\n\n**Notes:** Great for quick spread snapshot.",
         "url": "https://api.binance.com/api/v3/ticker/bookTicker",
         "sendQuery": true,
         "queryParameters": {
@@ -411,7 +411,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "### \ud83c\udff7 Tool: **Klines (Candles)**\n\n**Endpoint:** `GET /api/v3/klines`\n**What it does:** Candlestick bars for a symbol/interval.\n**Params:**\n\n* `symbol` (STRING, required)\n* `interval` (ENUM, required \u2014 e.g., `1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M`)\n* `limit` (INT, default 500, max 1000 \u2014 **we set 20**)\n* `startTime`, `endTime`, `timeZone` (optional)\n  **Request weight:** `2`.\n  **Returns (array per candle):** `[ openTime, open, high, low, close, volume, closeTime, quoteAssetVolume, numberOfTrades, takerBuyBaseVolume, takerBuyQuoteVolume, ignore ]`\n  **n8n query mapping:**\n\n```txt\nsymbol  = $fromAI('parameters0_Value', '', 'string')\ninterval= $fromAI('parameters1_Value', '15m', 'string')\nlimit   = $fromAI('parameters2_Value', 20, 'number')\n```\n\n**Notes:** Without `startTime/endTime`, returns most recent.",
+        "toolDescription": "### 🏷 Tool: **Klines (Candles)**\n\n**Endpoint:** `GET /api/v3/klines`\n**What it does:** Candlestick bars for a symbol/interval.\n**Params:**\n\n* `symbol` (STRING, required)\n* `interval` (ENUM, required — e.g., `1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M`)\n* `limit` (INT, default 500, max 1000 — **we set 20**)\n* `startTime`, `endTime`, `timeZone` (optional)\n  **Request weight:** `2`.\n  **Returns (array per candle):** `[ openTime, open, high, low, close, volume, closeTime, quoteAssetVolume, numberOfTrades, takerBuyBaseVolume, takerBuyQuoteVolume, ignore ]`\n  **n8n query mapping:**\n\n```txt\nsymbol  = $fromAI('parameters0_Value', '', 'string')\ninterval= $fromAI('parameters1_Value', '15m', 'string')\nlimit   = $fromAI('parameters2_Value', 20, 'number')\n```\n\n**Notes:** Without `startTime/endTime`, returns most recent.",
         "url": "https://api.binance.com/api/v3/klines",
         "sendQuery": true,
         "queryParameters": {
@@ -443,7 +443,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "### \ud83c\udff7 Tool: **Average Price**\n\n**Endpoint:** `GET /api/v3/avgPrice`\n**What it does:** **Current average price** for a symbol (rolling).\n**Params:** `symbol` (STRING, required)\n**Request weight:** `2`.\n**Returns:** `{\"mins\":5,\"price\":\"...\",\"closeTime\":...}`\n**n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\n```\n\n**Notes:** Fast way to include an average alongside `lastPrice`.",
+        "toolDescription": "### 🏷 Tool: **Average Price**\n\n**Endpoint:** `GET /api/v3/avgPrice`\n**What it does:** **Current average price** for a symbol (rolling).\n**Params:** `symbol` (STRING, required)\n**Request weight:** `2`.\n**Returns:** `{\"mins\":5,\"price\":\"...\",\"closeTime\":...}`\n**n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\n```\n\n**Notes:** Fast way to include an average alongside `lastPrice`.",
         "url": "https://api.binance.com/api/v3/avgPrice",
         "sendQuery": true,
         "queryParameters": {
@@ -467,7 +467,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "### \ud83c\udff7 Tool: **Recent Trades**\n\n**Endpoint:** `GET /api/v3/trades`\n**What it does:** **Most recent trades** for a symbol.\n**Params:**\n\n* `symbol` (STRING, required)\n* `limit` (INT, default 500, max 1000 \u2014 **we set default 100**)\n  **Request weight:** `25`.\n  **Returns:** array of trades `{id, price, qty, quoteQty, time, isBuyerMaker, isBestMatch}`\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\nlimit  = $fromAI('parameters1_Value', 100, 'number')\n```\n\n**Notes:** For older trades, use `/historicalTrades`.",
+        "toolDescription": "### 🏷 Tool: **Recent Trades**\n\n**Endpoint:** `GET /api/v3/trades`\n**What it does:** **Most recent trades** for a symbol.\n**Params:**\n\n* `symbol` (STRING, required)\n* `limit` (INT, default 500, max 1000 — **we set default 100**)\n  **Request weight:** `25`.\n  **Returns:** array of trades `{id, price, qty, quoteQty, time, isBuyerMaker, isBestMatch}`\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\nlimit  = $fromAI('parameters1_Value', 100, 'number')\n```\n\n**Notes:** For older trades, use `/historicalTrades`.",
         "url": "https://api.binance.com/api/v3/trades",
         "sendQuery": true,
         "queryParameters": {
@@ -525,7 +525,7 @@
     },
     {
       "parameters": {
-        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Klines (Candles)**\n\n**Endpoint:** `GET /api/v3/klines`\n**What it does:** Candlestick bars for a symbol/interval.\n**Params:**\n\n* `symbol` (STRING, required)\n* `interval` (ENUM, required \u2014 e.g., `1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M`)\n* `limit` (INT, default 500, max 1000 \u2014 **we set 20**)\n* `startTime`, `endTime`, `timeZone` (optional)\n  **Request weight:** `2`.\n  **Returns (array per candle):** `[ openTime, open, high, low, close, volume, closeTime, quoteAssetVolume, numberOfTrades, takerBuyBaseVolume, takerBuyQuoteVolume, ignore ]`\n  **n8n query mapping:**\n\n```txt\nsymbol  = $fromAI('parameters0_Value', '', 'string')\ninterval= $fromAI('parameters1_Value', '15m', 'string')\nlimit   = $fromAI('parameters2_Value', 20, 'number')\n```\n\n**Notes:** Without `startTime/endTime`, returns most recent.",
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Klines (Candles)**\n\n**Endpoint:** `GET /api/v3/klines`\n**What it does:** Candlestick bars for a symbol/interval.\n**Params:**\n\n* `symbol` (STRING, required)\n* `interval` (ENUM, required — e.g., `1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M`)\n* `limit` (INT, default 500, max 1000 — **we set 20**)\n* `startTime`, `endTime`, `timeZone` (optional)\n  **Request weight:** `2`.\n  **Returns (array per candle):** `[ openTime, open, high, low, close, volume, closeTime, quoteAssetVolume, numberOfTrades, takerBuyBaseVolume, takerBuyQuoteVolume, ignore ]`\n  **n8n query mapping:**\n\n```txt\nsymbol  = $fromAI('parameters0_Value', '', 'string')\ninterval= $fromAI('parameters1_Value', '15m', 'string')\nlimit   = $fromAI('parameters2_Value', 20, 'number')\n```\n\n**Notes:** Without `startTime/endTime`, returns most recent.",
         "height": 1060,
         "color": 6
       },
@@ -555,7 +555,7 @@
     },
     {
       "parameters": {
-        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Recent Trades**\n\n**Endpoint:** `GET /api/v3/trades`\n**What it does:** **Most recent trades** for a symbol.\n**Params:**\n\n* `symbol` (STRING, required)\n* `limit` (INT, default 500, max 1000 \u2014 **we set default 100**)\n  **Request weight:** `25`.\n  **Returns:** array of trades `{id, price, qty, quoteQty, time, isBuyerMaker, isBestMatch}`\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\nlimit  = $fromAI('parameters1_Value', 100, 'number')\n```\n\n**Notes:** For older trades, use `/historicalTrades`.",
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Recent Trades**\n\n**Endpoint:** `GET /api/v3/trades`\n**What it does:** **Most recent trades** for a symbol.\n**Params:**\n\n* `symbol` (STRING, required)\n* `limit` (INT, default 500, max 1000 — **we set default 100**)\n  **Request weight:** `25`.\n  **Returns:** array of trades `{id, price, qty, quoteQty, time, isBuyerMaker, isBestMatch}`\n  **n8n query mapping:**\n\n```txt\nsymbol = $fromAI('parameters0_Value', '', 'string')\nlimit  = $fromAI('parameters1_Value', 100, 'number')\n```\n\n**Notes:** For older trades, use `/historicalTrades`.",
         "height": 868,
         "color": 6
       },
@@ -581,7 +581,7 @@
     },
     {
       "parameters": {
-        "description": "### \ud83c\udff7 Tool: **Think**\n\n**Purpose:**\n\n* Lightweight **reasoning helper**.\n* Lets the AI Agent process intermediate logic, format outputs, or decide how to combine multiple API results before sending the final report.\n* Does not fetch data itself.\n\n**Use cases:**\n\n* Clean/reshape JSON from Binance endpoints\n* Extract only the needed fields (e.g., `lastPrice`, `volume`)\n* Help prepare data for Telegram message formatting\n\n**n8n setup notes:**\n\n* No API call, just an **AI Tool** node.\n* Connect upstream API results \u2192 Think \u2192 Report Agent."
+        "description": "### 🏷 Tool: **Think**\n\n**Purpose:**\n\n* Lightweight **reasoning helper**.\n* Lets the AI Agent process intermediate logic, format outputs, or decide how to combine multiple API results before sending the final report.\n* Does not fetch data itself.\n\n**Use cases:**\n\n* Clean/reshape JSON from Binance endpoints\n* Extract only the needed fields (e.g., `lastPrice`, `volume`)\n* Help prepare data for Telegram message formatting\n\n**n8n setup notes:**\n\n* No API call, just an **AI Tool** node.\n* Connect upstream API results → Think → Report Agent."
       },
       "id": "64e45dee-3756-4a08-8ec5-7e71011479de",
       "name": "Think",
@@ -594,7 +594,7 @@
     },
     {
       "parameters": {
-        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Calculator**\n\n**Purpose:**\n\n* Perform **math operations** inside the workflow.\n* Supports add/subtract/multiply/divide, percentages, rounding, etc.\n\n**Use cases:**\n\n* Calculate spreads (ask \u2013 bid)\n* Compute % changes from open vs. last price\n* Normalize volumes or confidence scores\n\n**n8n setup notes:**\n\n* Node: `Calculator` (n8n built-in)\n* Input fields can come from Binance API JSON\n* Output can be chained into Think \u2192 Final Report\n",
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Calculator**\n\n**Purpose:**\n\n* Perform **math operations** inside the workflow.\n* Supports add/subtract/multiply/divide, percentages, rounding, etc.\n\n**Use cases:**\n\n* Calculate spreads (ask – bid)\n* Compute % changes from open vs. last price\n* Normalize volumes or confidence scores\n\n**n8n setup notes:**\n\n* Node: `Calculator` (n8n built-in)\n* Input fields can come from Binance API JSON\n* Output can be chained into Think → Final Report\n",
         "height": 836,
         "color": 6
       },
@@ -609,7 +609,7 @@
     },
     {
       "parameters": {
-        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Think**\n\n**Purpose:**\n\n* Lightweight **reasoning helper**.\n* Lets the AI Agent process intermediate logic, format outputs, or decide how to combine multiple API results before sending the final report.\n* Does not fetch data itself.\n\n**Use cases:**\n\n* Clean/reshape JSON from Binance endpoints\n* Extract only the needed fields (e.g., `lastPrice`, `volume`)\n* Help prepare data for Telegram message formatting\n\n**n8n setup notes:**\n\n* No API call, just an **AI Tool** node.\n* Connect upstream API results \u2192 Think \u2192 Report Agent.",
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### **Think**\n\n**Purpose:**\n\n* Lightweight **reasoning helper**.\n* Lets the AI Agent process intermediate logic, format outputs, or decide how to combine multiple API results before sending the final report.\n* Does not fetch data itself.\n\n**Use cases:**\n\n* Clean/reshape JSON from Binance endpoints\n* Extract only the needed fields (e.g., `lastPrice`, `volume`)\n* Help prepare data for Telegram message formatting\n\n**n8n setup notes:**\n\n* No API call, just an **AI Tool** node.\n* Connect upstream API results → Think → Report Agent.",
         "height": 932,
         "color": 6
       },
@@ -624,7 +624,7 @@
     },
     {
       "parameters": {
-        "content": "# \ud83d\udcd8 Binance AI Agent v1.02 \u2014 Documentation\n\n## \ud83d\udd39 Overview\n\nThis workflow connects a **Telegram Bot** to Binance\u2019s Spot Market REST API using an **AI-powered Agent**.\nIt allows you to fetch **real-time market data** (prices, stats, order book, trades, klines, etc.), process it through **OpenAI**, and deliver **clean formatted reports** back to Telegram.\n\n---\n\n## \u26a1 Workflow Flow\n\n1. **Telegram Trigger**\n\n   * Listens for incoming Telegram messages.\n   * Passes raw user text downstream.\n\n2. **User Authentication**\n\n   * Verifies sender\u2019s Telegram ID against a whitelist.\n   * Unauthorized users are blocked.\n\n3. **Session Setup**\n\n   * Creates `sessionId` from Telegram `chat.id`.\n   * Attaches user message text.\n   * Enables memory across multiple turns.\n\n4. **Binance AI Agent**\n\n   * Core orchestrator.\n   * Fetches live data directly from Binance API.\n   * Uses OpenAI only to **format results**, not to trade/analyze.\n   * Responds in **Telegram HTML format**.\n\n5. **Message Splitter**\n\n   * Ensures Telegram\u2019s 4000-character limit isn\u2019t exceeded.\n   * Splits long responses into safe chunks.\n\n6. **Telegram Send**\n\n   * Delivers the final formatted report (or multiple chunks) back to the authorized user.\n\n---\n\n## \ud83e\udde0 Memory & Reasoning\n\n* **Simple Memory**\n  Stores `sessionId`, requested symbol, and context for multi-turn Telegram chats.\n\n* **OpenAI Chat Model (gpt-4.1-mini)**\n  Handles reasoning, structuring, and output formatting.\n\n* **Think Tool**\n  Helps reshape JSON, pick relevant fields, and prepare clean messages.\n\n* **Calculator Tool**\n  Used for spreads, % changes, and simple math on Binance results.\n\n---\n\n## \ud83d\udd17 Binance API Endpoints Used\n\nAll requests are **HTTP GET** with **JSON responses**.\nSymbols are always uppercase (e.g., `BTCUSDT`).\n\n1. **Price (Latest)**\n   `GET /api/v3/ticker/price?symbol=BTCUSDT`\n\n   * Latest trade price.\n   * Weight: 2\n\n2. **24h Stats**\n   `GET /api/v3/ticker/24hr?symbol=BTCUSDT`\n\n   * Open, High, Low, Last, Volume, % Change.\n   * Weight: 2\n\n3. **Order Book Depth**\n   `GET /api/v3/depth?symbol=BTCUSDT&limit=100`\n\n   * Top bids/asks (default 100, max 5000).\n   * Weight: 5\u2013250 depending on limit.\n\n4. **Best Bid/Ask (Book Ticker)**\n   `GET /api/v3/ticker/bookTicker?symbol=BTCUSDT`\n\n   * Best bid/ask + sizes.\n   * Weight: 2\n\n5. **Klines (Candles)**\n   `GET /api/v3/klines?symbol=BTCUSDT&interval=15m&limit=20`\n\n   * O/H/L/C data per interval.\n   * Default 500, we set 20.\n   * Weight: 2\n\n6. **Average Price**\n   `GET /api/v3/avgPrice?symbol=BTCUSDT`\n\n   * Rolling average price.\n   * Weight: 2\n\n7. **Recent Trades**\n   `GET /api/v3/trades?symbol=BTCUSDT&limit=100`\n\n   * Most recent trades (default 500, max 1000).\n   * Weight: 25\n\n---\n\n## \ud83d\udce4 Output Format (Telegram HTML)\n\nEach response starts with:\n\n```html\n<b>BTCUSDT \u2014 Binance Spot Data</b>\n```\n\nExample structure:\n\n```html\n<b>Price</b>\n\u2022 Last: 43650.23\n\u2022 Avg: 43640.18\n\u2022 Change (24h): +1.35%\n\n<b>24h Stats</b>\n\u2022 Open: 43000 \u2022 High: 44000 \u2022 Low: 42500 \u2022 Close: 43650\n\u2022 Volume: 12,345 BTC \u2022 Quote Vol: 532M USDT\n\n<b>Order Book (Top 5)</b>\n\u2022 Bids: [43640 \u00d7 1.2] \u2026\n\u2022 Asks: [43660 \u00d7 0.9] \u2026\n\n<b>Klines (latest 20)</b>\n\u2022 Interval: 15m (O/H/L/C per candle)\n```\n\n---\n\n## \u26a0\ufe0f Rules & Restrictions\n\n* \u2705 Always call Binance\u2019s official API.\n* \u2705 Present data clearly (HTML for Telegram).\n* \u274c Do not analyze or recommend trades.\n* \u274c Do not output raw JSON.\n* \u274c Do not fabricate values.\n* \u26a0\ufe0f Show `N/A` if data unavailable.\n\n---\n\n## \ud83d\ude80 Support & Licensing\n\n\ud83d\udd17 **Don Jayamaha \u2013 LinkedIn**\n[linkedin.com/in/donjayamahajr](http://linkedin.com/in/donjayamahajr)\n\n\u00a9 2025 Treasurium Capital Limited Company.\nAll rights reserved. This system architecture, prompts, and workflow structure are proprietary and protected by **U.S. copyright law**.\nReuse or resale prohibited without license.\n\n",
+        "content": "# 📘 Binance AI Agent v1.02 — Documentation\n\n## 🔹 Overview\n\nThis workflow connects a **Telegram Bot** to Binance’s Spot Market REST API using an **AI-powered Agent**.\nIt allows you to fetch **real-time market data** (prices, stats, order book, trades, klines, etc.), process it through **OpenAI**, and deliver **clean formatted reports** back to Telegram.\n\n---\n\n## ⚡ Workflow Flow\n\n1. **Telegram Trigger**\n\n   * Listens for incoming Telegram messages.\n   * Passes raw user text downstream.\n\n2. **User Authentication**\n\n   * Verifies sender’s Telegram ID against a whitelist.\n   * Unauthorized users are blocked.\n\n3. **Session Setup**\n\n   * Creates `sessionId` from Telegram `chat.id`.\n   * Attaches user message text.\n   * Enables memory across multiple turns.\n\n4. **Binance AI Agent**\n\n   * Core orchestrator.\n   * Fetches live data directly from Binance API.\n   * Uses OpenAI only to **format results**, not to trade/analyze.\n   * Responds in **Telegram HTML format**.\n\n5. **Message Splitter**\n\n   * Ensures Telegram’s 4000-character limit isn’t exceeded.\n   * Splits long responses into safe chunks.\n\n6. **Telegram Send**\n\n   * Delivers the final formatted report (or multiple chunks) back to the authorized user.\n\n---\n\n## 🧠 Memory & Reasoning\n\n* **Simple Memory**\n  Stores `sessionId`, requested symbol, and context for multi-turn Telegram chats.\n\n* **OpenAI Chat Model (gpt-4.1-mini)**\n  Handles reasoning, structuring, and output formatting.\n\n* **Think Tool**\n  Helps reshape JSON, pick relevant fields, and prepare clean messages.\n\n* **Calculator Tool**\n  Used for spreads, % changes, and simple math on Binance results.\n\n---\n\n## 🔗 Binance API Endpoints Used\n\nAll requests are **HTTP GET** with **JSON responses**.\nSymbols are always uppercase (e.g., `BTCUSDT`).\n\n1. **Price (Latest)**\n   `GET /api/v3/ticker/price?symbol=BTCUSDT`\n\n   * Latest trade price.\n   * Weight: 2\n\n2. **24h Stats**\n   `GET /api/v3/ticker/24hr?symbol=BTCUSDT`\n\n   * Open, High, Low, Last, Volume, % Change.\n   * Weight: 2\n\n3. **Order Book Depth**\n   `GET /api/v3/depth?symbol=BTCUSDT&limit=100`\n\n   * Top bids/asks (default 100, max 5000).\n   * Weight: 5–250 depending on limit.\n\n4. **Best Bid/Ask (Book Ticker)**\n   `GET /api/v3/ticker/bookTicker?symbol=BTCUSDT`\n\n   * Best bid/ask + sizes.\n   * Weight: 2\n\n5. **Klines (Candles)**\n   `GET /api/v3/klines?symbol=BTCUSDT&interval=15m&limit=20`\n\n   * O/H/L/C data per interval.\n   * Default 500, we set 20.\n   * Weight: 2\n\n6. **Average Price**\n   `GET /api/v3/avgPrice?symbol=BTCUSDT`\n\n   * Rolling average price.\n   * Weight: 2\n\n7. **Recent Trades**\n   `GET /api/v3/trades?symbol=BTCUSDT&limit=100`\n\n   * Most recent trades (default 500, max 1000).\n   * Weight: 25\n\n---\n\n## 📤 Output Format (Telegram HTML)\n\nEach response starts with:\n\n```html\n<b>BTCUSDT — Binance Spot Data</b>\n```\n\nExample structure:\n\n```html\n<b>Price</b>\n• Last: 43650.23\n• Avg: 43640.18\n• Change (24h): +1.35%\n\n<b>24h Stats</b>\n• Open: 43000 • High: 44000 • Low: 42500 • Close: 43650\n• Volume: 12,345 BTC • Quote Vol: 532M USDT\n\n<b>Order Book (Top 5)</b>\n• Bids: [43640 × 1.2] …\n• Asks: [43660 × 0.9] …\n\n<b>Klines (latest 20)</b>\n• Interval: 15m (O/H/L/C per candle)\n```\n\n---\n\n## ⚠️ Rules & Restrictions\n\n* ✅ Always call Binance’s official API.\n* ✅ Present data clearly (HTML for Telegram).\n* ❌ Do not analyze or recommend trades.\n* ❌ Do not output raw JSON.\n* ❌ Do not fabricate values.\n* ⚠️ Show `N/A` if data unavailable.\n\n---\n\n## 🚀 Support & Licensing\n\n🔗 **Don Jayamaha – LinkedIn**\n[linkedin.com/in/donjayamahajr](http://linkedin.com/in/donjayamahajr)\n\n© 2025 Treasurium Capital Limited Company.\nAll rights reserved. This system architecture, prompts, and workflow structure are proprietary and protected by **U.S. copyright law**.\nReuse or resale prohibited without license.\n\n",
         "height": 3584,
         "width": 1584
       },
@@ -755,7 +755,7 @@
     },
     {
       "id": "SymbolsFanout",
-      "name": "Symbols \u2192 Items (Function)",
+      "name": "Symbols → Items (Function)",
       "type": "n8n-nodes-base.function",
       "typeVersion": 2,
       "position": [
@@ -956,7 +956,7 @@
         240
       ],
       "parameters": {
-        "functionCode": "// Template IF for 'Confluence Entry Gate' \u2014 replace with your prompt's condition\nconst F = $json.features;\nconst signal = (F.ema9 > F.ema21) && (F.vol > 1.5*F.avgVol20) && (F.delta > 0) && (F.bidDepth > F.askDepth);\nreturn [{ json: { ...$json, decision: { signal, reason: \"EMA9>21 && vol>1.5x && delta>0 && bid>ask\" } } }];\n"
+        "functionCode": "// Template IF for 'Confluence Entry Gate' — replace with your prompt's condition\nconst F = $json.features;\nconst signal = (F.ema9 > F.ema21) && (F.vol > 1.5*F.avgVol20) && (F.delta > 0) && (F.bidDepth > F.askDepth);\nreturn [{ json: { ...$json, decision: { signal, reason: \"EMA9>21 && vol>1.5x && delta>0 && bid>ask\" } } }];\n"
       }
     },
     {
@@ -1069,7 +1069,7 @@
         120
       ],
       "parameters": {
-        "functionCode": "const o = $json.order_intent;\nconst F = $json.features;\nconst fmt = (n)=> Number(n).toLocaleString(undefined,{maximumFractionDigits:6});\nconst msg = [\n  '<b>Trade Executed \u2705</b>',\n  `<b>Prompt:</b> ${$json.prompt_name}`,\n  `<b>Symbol:</b> ${o.symbol}`,\n  `<b>Side:</b> ${o.side} ${o.type} @ ${fmt(o.price)} x ${fmt(o.quantity)}`,\n  `<b>TP/SL:</b> ${fmt(o.tp)} / ${fmt(o.sl)}`,\n  `<b>Spread:</b> ${(F.spread*100).toFixed(3)}%`,\n  `<b>Bid/Ask Depth:</b> ${fmt(F.bidDepth)} / ${fmt(F.askDepth)}`,\n  `<b>Delta:</b> ${fmt(F.delta)} | <b>24h%:</b> ${F.change24h}%`,\n  `<i>${$json.detailed_prompt}</i>`\n].join('\\n');\nreturn [{ json: { message: msg, chatId: $json.telegram?.chatId || '' } }];\n"
+        "functionCode": "const o = $json.order_intent;\nconst F = $json.features;\nconst fmt = (n)=> Number(n).toLocaleString(undefined,{maximumFractionDigits:6});\nconst msg = [\n  '<b>Trade Executed ✅</b>',\n  `<b>Prompt:</b> ${$json.prompt_name}`,\n  `<b>Symbol:</b> ${o.symbol}`,\n  `<b>Side:</b> ${o.side} ${o.type} @ ${fmt(o.price)} x ${fmt(o.quantity)}`,\n  `<b>TP/SL:</b> ${fmt(o.tp)} / ${fmt(o.sl)}`,\n  `<b>Spread:</b> ${(F.spread*100).toFixed(3)}%`,\n  `<b>Bid/Ask Depth:</b> ${fmt(F.bidDepth)} / ${fmt(F.askDepth)}`,\n  `<b>Delta:</b> ${fmt(F.delta)} | <b>24h%:</b> ${F.change24h}%`,\n  `<i>${$json.detailed_prompt}</i>`\n].join('\\n');\nreturn [{ json: { message: msg, chatId: $json.telegram?.chatId || '' } }];\n"
       }
     },
     {
@@ -1106,11 +1106,10 @@
         360
       ],
       "parameters": {
-        "functionCode": "const msg = `\u23f8 No-trade for ${$json.features.symbol} on ${$json.prompt_name}: conditions not met.`;\nreturn [{ json: { message: msg, chatId: $json.telegram?.chatId || '' } }];\n"
+        "functionCode": "const msg = `⏸ No-trade for ${$json.features.symbol} on ${$json.prompt_name}: conditions not met.`;\nreturn [{ json: { message: msg, chatId: $json.telegram?.chatId || '' } }];\n"
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "Think": {
       "ai_tool": [
@@ -1297,14 +1296,14 @@
       "main": [
         [
           {
-            "node": "Symbols \u2192 Items (Function)",
+            "node": "Symbols → Items (Function)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Symbols \u2192 Items (Function)": {
+    "Symbols → Items (Function)": {
       "main": [
         [
           {
@@ -1534,6 +1533,7 @@
       ]
     }
   },
+  "pinData": {},
   "active": false,
   "settings": {},
   "versionId": "bc2cc094-6c2c-437a-b312-e692670d6bf0",
