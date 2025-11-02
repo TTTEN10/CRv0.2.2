@@ -1,0 +1,663 @@
+{
+  "name": "CR Modular - Binance AI Trade Core (Template)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "ScheduleTrigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "mode": "every",
+              "value": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ConfigSet",
+      "name": "Prompt & Config (Set)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        420,
+        200
+      ],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "prompt_name",
+              "value": "Confluence Entry Gate"
+            },
+            {
+              "name": "detailed_prompt",
+              "value": "Trade only when at least 3 confluences: trend up, volume expansion, positive delta, and bid > ask."
+            },
+            {
+              "name": "execution_note",
+              "value": "TP +2%, SL -1%, size risk 0.5% of equity, send Telegram summary."
+            },
+            {
+              "name": "secrets.binanceKey",
+              "value": "PUT_YOUR_BINANCE_API_KEY_HERE"
+            },
+            {
+              "name": "secrets.binanceSecret",
+              "value": "PUT_YOUR_BINANCE_SECRET_HERE"
+            },
+            {
+              "name": "telegram.chatId",
+              "value": "PUT_TELEGRAM_CHAT_ID_HERE"
+            }
+          ],
+          "number": [
+            {
+              "name": "config.equity",
+              "value": 10000
+            },
+            {
+              "name": "config.riskPct",
+              "value": 0.005
+            },
+            {
+              "name": "filters.tickSize",
+              "value": 0.01
+            },
+            {
+              "name": "filters.stepSize",
+              "value": 0.001
+            }
+          ],
+          "boolean": [
+            {
+              "name": "config.isSpot",
+              "value": true
+            }
+          ],
+          "array": [
+            {
+              "name": "symbols",
+              "value": [
+                "BTCUSDT",
+                "ETHUSDT",
+                "SOLUSDT"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SymbolsFanout",
+      "name": "Symbols \u2192 Items (Function)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        660,
+        200
+      ],
+      "parameters": {
+        "functionCode": "const symbols = $json.symbols || [];\nreturn symbols.map(s => ({ json: { symbol: s, config: $json.config, secrets: $json.secrets, telegram: $json.telegram, prompt_name: $json.prompt_name, detailed_prompt: $json.detailed_prompt, execution_note: $json.execution_note } }));\n"
+      }
+    },
+    {
+      "id": "HTTP_Price",
+      "name": "Price (GET /ticker/price)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        900,
+        40
+      ],
+      "parameters": {
+        "url": "https://api.binance.com/api/v3/ticker/price",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "symbol",
+              "value": "={{$json.symbol}}"
+            }
+          ]
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "HTTP_24h",
+      "name": "24h Stats (GET /ticker/24hr)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        900,
+        120
+      ],
+      "parameters": {
+        "url": "https://api.binance.com/api/v3/ticker/24hr",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "symbol",
+              "value": "={{$json.symbol}}"
+            }
+          ]
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "HTTP_Book",
+      "name": "Book Ticker (GET /ticker/bookTicker)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        900,
+        200
+      ],
+      "parameters": {
+        "url": "https://api.binance.com/api/v3/ticker/bookTicker",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "symbol",
+              "value": "={{$json.symbol}}"
+            }
+          ]
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "HTTP_Depth",
+      "name": "Depth (GET /depth)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        900,
+        280
+      ],
+      "parameters": {
+        "url": "https://api.binance.com/api/v3/depth",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "symbol",
+              "value": "={{$json.symbol}}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "HTTP_Klines",
+      "name": "Klines 5m (GET /klines)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        900,
+        360
+      ],
+      "parameters": {
+        "url": "https://api.binance.com/api/v3/klines",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "symbol",
+              "value": "={{$json.symbol}}"
+            },
+            {
+              "name": "interval",
+              "value": "5m"
+            },
+            {
+              "name": "limit",
+              "value": "120"
+            }
+          ]
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "HTTP_Trades",
+      "name": "Recent Trades (GET /trades)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        900,
+        440
+      ],
+      "parameters": {
+        "url": "https://api.binance.com/api/v3/trades",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "symbol",
+              "value": "={{$json.symbol}}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "MergeAll",
+      "name": "Merge Data (Wait)",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        240
+      ],
+      "parameters": {
+        "mode": "wait"
+      }
+    },
+    {
+      "id": "ComputeIndicators",
+      "name": "Compute Indicators (Function)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1330,
+        240
+      ],
+      "parameters": {
+        "functionCode": "// Assume input0: Price, input1: 24h, input2: Book, input3: Depth, input4: Klines, input5: Trades\nconst price = items[0].json;\nconst stats24h = items[1].json;\nconst book = items[2].json;\nconst depth = items[3].json;\nconst klines = items[4].json;\nconst trades = items[5].json;\n\nfunction ema(values, period) {\n  const k = 2/(period+1);\n  let e = values[0];\n  for (let i=1;i<values.length;i++) e = values[i]*k + e*(1-k);\n  return e;\n}\nfunction sma(arr, p){\n  const s = arr.slice(-p);\n  return s.reduce((a,b)=>a+b,0)/s.length;\n}\nfunction rsi(closes, period=14) {\n  if (closes.length <= period+1) return 50;\n  let gains=0, losses=0;\n  for (let i=1;i<=period;i++){\n    const diff = closes[i]-closes[i-1];\n    if (diff>=0) gains+=diff; else losses-=diff;\n  }\n  let avgGain=gains/period, avgLoss=losses/period || 1e-9;\n  for (let i=period+1;i<closes.length;i++){\n    const diff = closes[i]-closes[i-1];\n    const gain = diff>0?diff:0;\n    const loss = diff<0?-diff:0;\n    avgGain=(avgGain*(period-1)+gain)/period;\n    avgLoss=(avgLoss*(period-1)+loss)/period;\n  }\n  const rs=avgGain/avgLoss;\n  return 100 - 100/(1+rs);\n}\n\nconst closes5m = (Array.isArray(klines)?klines:[]).map(c => parseFloat(c[4]));\nconst vols5m = (Array.isArray(klines)?klines:[]).map(c => parseFloat(c[5]));\nconst lastClose = closes5m[closes5m.length-1];\n\nconst ema9 = ema(closes5m.slice(-60),9);\nconst ema21 = ema(closes5m.slice(-60),21);\nconst ema50 = ema(closes5m.slice(-120),50);\nconst rsi14 = rsi(closes5m.slice(-100),14);\nconst avgVol20 = sma(vols5m,20);\nconst vol = vols5m[vols5m.length-1];\n\nconst bid = parseFloat(book.bidPrice || price.price);\nconst ask = parseFloat(book.askPrice || price.price);\nconst spread = (ask - bid)/((ask+bid)/2);\n\nconst bids = (depth.bids||[]).slice(0,50).reduce((s,[p,q])=>s+parseFloat(q),0);\nconst asks = (depth.asks||[]).slice(0,50).reduce((s,[p,q])=>s+parseFloat(q),0);\n\nlet delta=0;\nfor (const t of (trades||[])) {\n  const qty = parseFloat(t.qty || t.quantity || 0);\n  delta += (t.isBuyerMaker ? -qty : qty);\n}\n\nconst features = {\n  symbol: price.symbol || stats24h.symbol,\n  ema9, ema21, ema50,\n  lastClose,\n  vol, avgVol20,\n  spread, bidDepth: bids, askDepth: asks,\n  delta,\n  change24h: parseFloat(stats24h.priceChangePercent || 0),\n  rsi14\n};\n\nreturn [{ json: { ...$json, features } }];\n"
+      }
+    },
+    {
+      "id": "EvaluateIF",
+      "name": "Evaluate IF (Function)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        240
+      ],
+      "parameters": {
+        "functionCode": "// Template IF for 'Confluence Entry Gate' \u2014 replace with your prompt's condition\nconst F = $json.features;\nconst signal = (F.ema9 > F.ema21) && (F.vol > 1.5*F.avgVol20) && (F.delta > 0) && (F.bidDepth > F.askDepth);\nreturn [{ json: { ...$json, decision: { signal, reason: \"EMA9>21 && vol>1.5x && delta>0 && bid>ask\" } } }];\n"
+      }
+    },
+    {
+      "id": "IFNode",
+      "name": "IF signal?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1750,
+        240
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.decision.signal}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "BuildOrder",
+      "name": "Build Order Intent (Function)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1960,
+        120
+      ],
+      "parameters": {
+        "functionCode": "function roundStep(v, step=0.001){ return Math.floor(v/step)*step; }\nfunction roundTick(v, tick=0.01){ return Math.floor(v/tick)*tick; }\n\nconst F = $json.features;\nconst entry = F.lastClose || 0;\nconst equity = $json.config?.equity || 10000;\nconst riskPct = $json.config?.riskPct || 0.005;\nconst risk$ = equity * riskPct;\n\nconst tp = entry * 1.02;\nconst sl = entry * 0.99;\nconst stopDist = entry - sl;\nconst qtyRaw = risk$ / stopDist;\n\nconst qty = roundStep(qtyRaw, $json[\"filters.stepSize\"] || 0.001);\nconst price = roundTick(entry, $json[\"filters.tickSize\"] || 0.01);\n\nreturn [{ json: { ...$json, order_intent: {\n  symbol: F.symbol, side: \"BUY\", type: \"LIMIT\", timeInForce: \"GTC\",\n  price, quantity: qty, tp, sl\n} } }];\n"
+      }
+    },
+    {
+      "id": "SignOrder",
+      "name": "Sign Order (Function)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        120
+      ],
+      "parameters": {
+        "functionCode": "const crypto = require('crypto');\nconst o = $json.order_intent;\nconst timestamp = Date.now();\nconst recvWindow = 5000;\n\nconst params = new URLSearchParams({\n  symbol: o.symbol,\n  side: o.side,\n  type: o.type,\n  timeInForce: o.timeInForce,\n  quantity: String(o.quantity),\n  price: String(o.price),\n  timestamp: String(timestamp),\n  recvWindow: String(recvWindow),\n});\n\nconst secret = $json.secrets?.binanceSecret || 'PUT_SECRET';\nconst signature = crypto.createHmac('sha256', secret).update(params.toString()).digest('hex');\n\nreturn [{ json: { ...$json, signed_order: {\n  query: params.toString() + `&signature=${signature}`,\n  apiKeyHeader: $json.secrets?.binanceKey || 'PUT_API_KEY'\n} } }];\n"
+      }
+    },
+    {
+      "id": "HTTP_PlaceOrder",
+      "name": "Place Order (POST /api/v3/order)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2360,
+        120
+      ],
+      "parameters": {
+        "url": "https://api.binance.com/api/v3/order",
+        "method": "POST",
+        "sendQuery": false,
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-MBX-APIKEY",
+              "value": "={{$json.signed_order.apiKeyHeader}}"
+            }
+          ]
+        },
+        "contentType": "form-urlencoded",
+        "jsonParameters": false,
+        "sendBody": true,
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "=",
+              "value": "={{$json.signed_order.query}}"
+            }
+          ]
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "AppendExcel",
+      "name": "Append to Excel (Spreadsheet File)",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        120
+      ],
+      "parameters": {
+        "operation": "append",
+        "options": {
+          "headerRow": true
+        },
+        "sheetName": "trades",
+        "fileName": "/mnt/data/trades.xlsx",
+        "data": "={{ [{ timestamp: (new Date()).toISOString(), prompt_name: $json.prompt_name, symbol: $json.order_intent.symbol, side: $json.order_intent.side, type: $json.order_intent.type, price: $json.order_intent.price, quantity: $json.order_intent.quantity, tp: $json.order_intent.tp, sl: $json.order_intent.sl, spread: $json.features.spread, bidDepth: $json.features.bidDepth, askDepth: $json.features.askDepth, delta: $json.features.delta, change24h: $json.features.change24h, decision_reason: $json.decision.reason } ] }}"
+      }
+    },
+    {
+      "id": "BuildTelegram",
+      "name": "Build Telegram (Function)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        2760,
+        120
+      ],
+      "parameters": {
+        "functionCode": "const o = $json.order_intent;\nconst F = $json.features;\nconst fmt = (n)=> Number(n).toLocaleString(undefined,{maximumFractionDigits:6});\nconst msg = [\n  '<b>Trade Executed \u2705</b>',\n  `<b>Prompt:</b> ${$json.prompt_name}`,\n  `<b>Symbol:</b> ${o.symbol}`,\n  `<b>Side:</b> ${o.side} ${o.type} @ ${fmt(o.price)} x ${fmt(o.quantity)}`,\n  `<b>TP/SL:</b> ${fmt(o.tp)} / ${fmt(o.sl)}`,\n  `<b>Spread:</b> ${(F.spread*100).toFixed(3)}%`,\n  `<b>Bid/Ask Depth:</b> ${fmt(F.bidDepth)} / ${fmt(F.askDepth)}`,\n  `<b>Delta:</b> ${fmt(F.delta)} | <b>24h%:</b> ${F.change24h}%`,\n  `<i>${$json.detailed_prompt}</i>`\n].join('\\n');\nreturn [{ json: { message: msg, chatId: $json.telegram?.chatId || '' } }];\n"
+      }
+    },
+    {
+      "id": "TelegramSend",
+      "name": "Telegram Send",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        120
+      ],
+      "parameters": {
+        "operation": "sendMessage",
+        "text": "={{$json.message}}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        },
+        "chatId": "={{$json.chatId}}"
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "PUT_YOUR_TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram API"
+        }
+      }
+    },
+    {
+      "id": "NoTradeMsg",
+      "name": "No-Trade Message (Function)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1960,
+        360
+      ],
+      "parameters": {
+        "functionCode": "const msg = `\u23f8 No-trade for ${$json.features.symbol} on ${$json.prompt_name}: conditions not met.`;\nreturn [{ json: { message: msg, chatId: $json.telegram?.chatId || '' } }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        {
+          "node": "Prompt & Config (Set)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Prompt & Config (Set)": {
+      "main": [
+        {
+          "node": "Symbols \u2192 Items (Function)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Symbols \u2192 Items (Function)": {
+      "main": [
+        {
+          "node": "Price (GET /ticker/price)",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "24h Stats (GET /ticker/24hr)",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Book Ticker (GET /ticker/bookTicker)",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Depth (GET /depth)",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Klines 5m (GET /klines)",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Recent Trades (GET /trades)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Price (GET /ticker/price)": {
+      "main": [
+        {
+          "node": "Merge Data (Wait)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "24h Stats (GET /ticker/24hr)": {
+      "main": [
+        {
+          "node": "Merge Data (Wait)",
+          "type": "main",
+          "index": 1
+        }
+      ]
+    },
+    "Book Ticker (GET /ticker/bookTicker)": {
+      "main": [
+        {
+          "node": "Merge Data (Wait)",
+          "type": "main",
+          "index": 2
+        }
+      ]
+    },
+    "Depth (GET /depth)": {
+      "main": [
+        {
+          "node": "Merge Data (Wait)",
+          "type": "main",
+          "index": 3
+        }
+      ]
+    },
+    "Klines 5m (GET /klines)": {
+      "main": [
+        {
+          "node": "Merge Data (Wait)",
+          "type": "main",
+          "index": 4
+        }
+      ]
+    },
+    "Recent Trades (GET /trades)": {
+      "main": [
+        {
+          "node": "Merge Data (Wait)",
+          "type": "main",
+          "index": 5
+        }
+      ]
+    },
+    "Merge Data (Wait)": {
+      "main": [
+        {
+          "node": "Compute Indicators (Function)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Compute Indicators (Function)": {
+      "main": [
+        {
+          "node": "Evaluate IF (Function)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Evaluate IF (Function)": {
+      "main": [
+        {
+          "node": "IF signal?",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "IF signal?": {
+      "main": [
+        {
+          "node": "Build Order Intent (Function)",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "No-Trade Message (Function)",
+          "type": "main",
+          "index": 1
+        }
+      ]
+    },
+    "Build Order Intent (Function)": {
+      "main": [
+        {
+          "node": "Sign Order (Function)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Sign Order (Function)": {
+      "main": [
+        {
+          "node": "Place Order (POST /api/v3/order)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Place Order (POST /api/v3/order)": {
+      "main": [
+        {
+          "node": "Append to Excel (Spreadsheet File)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Append to Excel (Spreadsheet File)": {
+      "main": [
+        {
+          "node": "Build Telegram (Function)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Build Telegram (Function)": {
+      "main": [
+        {
+          "node": "Telegram Send",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "No-Trade Message (Function)": {
+      "main": [
+        {
+          "node": "Telegram Send",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    }
+  },
+  "settings": {},
+  "pinData": {}
+}
