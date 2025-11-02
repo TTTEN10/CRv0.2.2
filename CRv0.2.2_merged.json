@@ -1284,203 +1284,253 @@
     },
     "Schedule Trigger": {
       "main": [
-        {
-          "node": "Prompt & Config (Set)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Prompt & Config (Set)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Prompt & Config (Set)": {
       "main": [
-        {
-          "node": "Symbols \u2192 Items (Function)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Symbols \u2192 Items (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Symbols \u2192 Items (Function)": {
       "main": [
-        {
-          "node": "Price (GET /ticker/price)",
-          "type": "main",
-          "index": 0
-        },
-        {
-          "node": "24h Stats (GET /ticker/24hr)",
-          "type": "main",
-          "index": 0
-        },
-        {
-          "node": "Book Ticker (GET /ticker/bookTicker)",
-          "type": "main",
-          "index": 0
-        },
-        {
-          "node": "Depth (GET /depth)",
-          "type": "main",
-          "index": 0
-        },
-        {
-          "node": "Klines 5m (GET /klines)",
-          "type": "main",
-          "index": 0
-        },
-        {
-          "node": "Recent Trades (GET /trades)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Price (GET /ticker/price)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "24h Stats (GET /ticker/24hr)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Book Ticker (GET /ticker/bookTicker)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Depth (GET /depth)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Klines 5m (GET /klines)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Recent Trades (GET /trades)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Price (GET /ticker/price)": {
       "main": [
-        {
-          "node": "Merge Data (Wait)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Merge Data (Wait)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "24h Stats (GET /ticker/24hr)": {
       "main": [
-        {
-          "node": "Merge Data (Wait)",
-          "type": "main",
-          "index": 1
-        }
+        [
+          {
+            "node": "Merge Data (Wait)",
+            "type": "main",
+            "index": 1
+          }
+        ]
       ]
     },
     "Book Ticker (GET /ticker/bookTicker)": {
       "main": [
-        {
-          "node": "Merge Data (Wait)",
-          "type": "main",
-          "index": 2
-        }
+        [
+          {
+            "node": "Merge Data (Wait)",
+            "type": "main",
+            "index": 2
+          }
+        ]
       ]
     },
     "Depth (GET /depth)": {
       "main": [
-        {
-          "node": "Merge Data (Wait)",
-          "type": "main",
-          "index": 3
-        }
+        [
+          {
+            "node": "Merge Data (Wait)",
+            "type": "main",
+            "index": 3
+          }
+        ]
       ]
     },
     "Klines 5m (GET /klines)": {
       "main": [
-        {
-          "node": "Merge Data (Wait)",
-          "type": "main",
-          "index": 4
-        }
+        [
+          {
+            "node": "Merge Data (Wait)",
+            "type": "main",
+            "index": 4
+          }
+        ]
       ]
     },
     "Recent Trades (GET /trades)": {
       "main": [
-        {
-          "node": "Merge Data (Wait)",
-          "type": "main",
-          "index": 5
-        }
+        [
+          {
+            "node": "Merge Data (Wait)",
+            "type": "main",
+            "index": 5
+          }
+        ]
       ]
     },
     "Merge Data (Wait)": {
       "main": [
-        {
-          "node": "Compute Indicators (Function)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Compute Indicators (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Compute Indicators (Function)": {
       "main": [
-        {
-          "node": "Evaluate IF (Function)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Evaluate IF (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Evaluate IF (Function)": {
       "main": [
-        {
-          "node": "IF signal?",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "IF signal?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "IF signal?": {
       "main": [
-        {
-          "node": "Build Order Intent (Function)",
-          "type": "main",
-          "index": 0
-        },
-        {
-          "node": "No-Trade Message (Function)",
-          "type": "main",
-          "index": 1
-        }
+        [
+          {
+            "node": "Build Order Intent (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No-Trade Message (Function)",
+            "type": "main",
+            "index": 1
+          }
+        ]
       ]
     },
     "Build Order Intent (Function)": {
       "main": [
-        {
-          "node": "Sign Order (Function)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Sign Order (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Sign Order (Function)": {
       "main": [
-        {
-          "node": "Place Order (POST /api/v3/order)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Place Order (POST /api/v3/order)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Place Order (POST /api/v3/order)": {
       "main": [
-        {
-          "node": "Append to Excel (Spreadsheet File)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Append to Excel (Spreadsheet File)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Append to Excel (Spreadsheet File)": {
       "main": [
-        {
-          "node": "Build Telegram (Function)",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Build Telegram (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Build Telegram (Function)": {
       "main": [
-        {
-          "node": "Telegram Send",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Telegram Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "No-Trade Message (Function)": {
       "main": [
-        {
-          "node": "Telegram Send",
-          "type": "main",
-          "index": 0
-        }
+        [
+          {
+            "node": "Telegram Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
